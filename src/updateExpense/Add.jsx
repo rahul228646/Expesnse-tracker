@@ -3,27 +3,20 @@ import Background from "../components/background/Background";
 import "./updateExpense.css";
 import { Button, MenuItem, Select, TextField, Typography } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { addTransaction } from "../slice/user";
-import { useNavigate } from "react-router-dom";
+import { addTransaction, updateTransaction } from "../slice/user";
+import { useLocation, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import { v4 as uuidv4 } from "uuid";
 
-const Add = () => {
-  const [transactionItem, setTransactionItem] = useState({
-    currencySymbole: "$",
-    currencyCode: "dollar",
-  });
+const Add = ({ title, buttonText }) => {
+  const [transactionItem, setTransactionItem] = useState();
 
-  const [date, setDate] = useState(new Date());
-
-  useEffect(() => {
-    setTransactionItem((prev) => ({
-      ...prev,
-      date: date,
-    }));
-  }, [date]);
+  const location = useLocation();
+  if (location?.state && !transactionItem) {
+    setTransactionItem(location?.state);
+  }
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -36,12 +29,18 @@ const Add = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    let item = transactionItem;
-    item = {
-      ...item,
-      id: uuidv4(),
-    };
-    dispatch(addTransaction(item));
+    if (buttonText == "Update") {
+      dispatch(updateTransaction(transactionItem));
+    } else {
+      let item = transactionItem;
+      item = {
+        ...item,
+        id: uuidv4(),
+        currencySymbole: "$",
+        currencyCode: "dollar",
+      };
+      dispatch(addTransaction(item));
+    }
     navigate("/");
   };
 
@@ -59,7 +58,7 @@ const Add = () => {
               fontWeight: "bold",
             }}
           >
-            Add Expense
+            {title}
           </Typography>
         </div>
       </div>
@@ -71,6 +70,7 @@ const Add = () => {
             style={{ color: "white" }}
             name="name"
             onChange={handleChange}
+            value={transactionItem?.name}
           >
             <MenuItem value={"Netflix"}>Netflix</MenuItem>
             <MenuItem value={"Upwork"}>Upwork</MenuItem>
@@ -85,14 +85,17 @@ const Add = () => {
             variant="outlined"
             onChange={handleChange}
             name="amount"
+            value={transactionItem?.amount}
           />
         </div>
 
         <div className="form-item">
           <label>Date</label>
           <DatePicker
-            selected={date}
-            onChange={(newVal) => setDate(newVal)}
+            selected={transactionItem?.date}
+            onChange={(newVal) =>
+              setTransactionItem((prev) => ({ ...prev, date: newVal }))
+            }
             className="datePicker"
           />
         </div>
@@ -100,7 +103,11 @@ const Add = () => {
         <div className="form-item">
           <label>Transaction Status</label>
 
-          <Select name="transactionStatus" onChange={handleChange}>
+          <Select
+            name="transactionStatus"
+            onChange={handleChange}
+            value={transactionItem?.transactionStatus}
+          >
             <MenuItem value={"paid"}>Paid</MenuItem>
             <MenuItem value={"received"}>Received</MenuItem>
           </Select>
@@ -113,10 +120,11 @@ const Add = () => {
           disabled={
             !transactionItem?.name ||
             !transactionItem?.transactionStatus ||
+            !transactionItem?.date ||
             !transactionItem?.amount
           }
         >
-          Add
+          {buttonText}
         </Button>
       </form>
     </div>

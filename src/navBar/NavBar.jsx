@@ -16,6 +16,9 @@ const NavBar = () => {
     if (location.pathname === "/") {
       setValue(0);
     }
+    if (location.pathname === "/edit") {
+      setValue(1);
+    }
   }, [location]);
 
   return (

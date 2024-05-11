@@ -6,8 +6,8 @@ const initialState = {
   totalIncome: 0,
   totalExpense: 0,
   transactions: [],
-  expenses: [],
   income: [],
+  expenses: [],
   currencySymbol: "$",
   currencyCode: "dollar",
 };
@@ -30,16 +30,83 @@ export const userInfoSlice = createSlice({
         state.balance = parseFloat(state.balance) + parseFloat(amount);
         state.totalIncome = parseFloat(state.totalIncome) + parseFloat(amount);
       }
-      let trsansaction = [...state.transactions, action.payload];
-      trsansaction.sort(function (a, b) {
+      let transaction = [...state.transactions, action.payload];
+      transaction.sort(function (a, b) {
         return new Date(b.date) - new Date(a.date);
       });
-      state.transactions = trsansaction;
+      state.transactions = transaction;
+    },
+
+    updateTransaction: (state, action) => {
+      const { id, transactionStatus, amount } = action.payload;
+      let transactionIdx = null;
+      transactionIdx = state.transactions.findIndex(
+        (trans) => trans?.id === id
+      );
+      let oldExpense = state.expenses;
+      let oldIncome = state.income;
+
+      let oldTransaction = state.transactions[transactionIdx];
+
+      if (oldTransaction?.transactionStatus === "paid") {
+        if (transactionStatus === "paid") {
+          state.balance =
+            parseFloat(state.balance) +
+            parseFloat(oldTransaction?.amount) -
+            parseFloat(amount);
+          state.totalExpense =
+            parseFloat(state.totalExpense) -
+            parseFloat(oldTransaction?.amount) +
+            parseFloat(amount);
+        } else {
+          oldExpense = oldExpense?.filter((expense) => expense?.id != id);
+          state.expenses = oldExpense;
+          state.income = [...state?.income, action.payload];
+          state.balance =
+            parseFloat(state.balance) +
+            parseFloat(oldTransaction?.amount) +
+            parseFloat(amount);
+          state.totalExpense =
+            parseFloat(state.totalExpense) - parseFloat(oldTransaction?.amount);
+          state.totalIncome =
+            parseFloat(state.totalIncome) + parseFloat(amount);
+        }
+      } else {
+        if (transactionStatus === "paid") {
+          oldIncome = oldIncome?.filter((income) => income?.id != id);
+          state.income = oldIncome;
+          state.expenses = [...state?.expenses, action.payload];
+          state.balance =
+            parseFloat(state.balance) -
+            parseFloat(oldTransaction?.amount) -
+            parseFloat(amount);
+          state.totalExpense =
+            parseFloat(state.totalExpense) + parseFloat(amount);
+          state.totalIncome =
+            parseFloat(state.totalIncome) - parseFloat(oldTransaction?.amount);
+        } else {
+          state.balance =
+            parseFloat(state.balance) -
+            parseFloat(oldTransaction?.amount) +
+            parseFloat(amount);
+          state.totalIncome =
+            parseFloat(state.totalIncome) -
+            parseFloat(oldTransaction?.amount) +
+            parseFloat(amount);
+        }
+      }
+
+      let allTransactions = state.transactions;
+      allTransactions[transactionIdx] = action.payload;
+      allTransactions?.sort(function (a, b) {
+        return new Date(b.date) - new Date(a.date);
+      });
+      state.transactions = allTransactions;
     },
   },
 });
 
-export const { addTransaction } = userInfoSlice.actions;
+export const { addTransaction, updateTransaction } = userInfoSlice.actions;
 
 export const selectUser = (state) => state.userInfo;
 
