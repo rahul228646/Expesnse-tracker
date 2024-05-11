@@ -45,6 +45,7 @@ const Analytics = () => {
   const [order, setOrder] = useState("desc");
   const [data, setData] = useState(expenses);
   const [selectedTab, setSelectedTab] = useState("day");
+  const [selectedTransaction, setSelectedTransaction] = useState("");
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -61,6 +62,12 @@ const Analytics = () => {
 
   const updateTab = (tab) => {
     setSelectedTab(tab);
+  };
+
+  const updateTransactionSelection = (id) => {
+    setSelectedTransaction(
+      data?.find((transaction) => transaction?.id === id)?.id
+    );
   };
 
   const sortedData = React.useMemo(() => {
@@ -98,7 +105,11 @@ const Analytics = () => {
             <MenuItem value={"income"}>Income</MenuItem>
           </Select>
         </div>
-        <AnalyticsChart transactionData={data} xAxisOption={selectedTab} />
+        <AnalyticsChart
+          transactionData={data}
+          xAxisOption={selectedTab}
+          updateTransactionSelection={updateTransactionSelection}
+        />
       </div>
       <div className="transactions-area">
         <div className="transactions-area-header">
@@ -116,7 +127,19 @@ const Analytics = () => {
         </div>
         <div className="transaction-area-content">
           {sortedData?.map((transaction) => {
-            return <TransactionItem data={transaction} />;
+            return (
+              <div
+                className={`analytic-item ${
+                  selectedTransaction === transaction?.id ? "selected-item" : ""
+                }`}
+              >
+                <TransactionItem
+                  key={transaction?.id}
+                  data={transaction}
+                  selected={selectedTransaction === transaction?.id}
+                />
+              </div>
+            );
           })}
         </div>
       </div>

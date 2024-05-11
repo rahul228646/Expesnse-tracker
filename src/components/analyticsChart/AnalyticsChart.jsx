@@ -21,7 +21,11 @@ ChartJS.register(
   Legend
 );
 
-const AnalyticsChart = ({ transactionData, xAxisOption }) => {
+const AnalyticsChart = ({
+  transactionData,
+  xAxisOption,
+  updateTransactionSelection,
+}) => {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     switch (xAxisOption) {
@@ -47,6 +51,15 @@ const AnalyticsChart = ({ transactionData, xAxisOption }) => {
         return date.toLocaleDateString("en-US", { year: "numeric" });
       default:
         return dateString;
+    }
+  };
+
+  const handleChartClick = (event, elements) => {
+    if (elements.length > 0) {
+      const firstElement = elements[0];
+      const index = firstElement.index;
+      const selectedData = transactionData[index];
+      updateTransactionSelection(selectedData?.id);
     }
   };
 
@@ -91,6 +104,7 @@ const AnalyticsChart = ({ transactionData, xAxisOption }) => {
         },
       },
     },
+    onClick: handleChartClick,
   };
 
   return <Line data={data} options={options} />;

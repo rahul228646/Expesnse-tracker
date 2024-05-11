@@ -41,7 +41,7 @@ const Add = () => {
       ...item,
       id: uuidv4(),
     };
-    dispatch(addTransaction(transactionItem));
+    dispatch(addTransaction(item));
     navigate("/");
   };
 
