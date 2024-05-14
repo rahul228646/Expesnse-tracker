@@ -3,11 +3,15 @@ import "./transactionItem.css";
 import { Typography } from "@mui/material";
 import moment from "moment";
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { deleteTransaction } from "../../slice/user";
 
 const TransactionItem = ({ data, selected }) => {
-  const { name, transactionStatus, currencySymbole, amount, date } = data;
+  const { id, name, transactionStatus, currencySymbole, amount, date } = data;
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
   return (
     <div className={`item-root`}>
@@ -29,10 +33,11 @@ const TransactionItem = ({ data, selected }) => {
           {" "}
           <Typography className="anmount-typo">
             <span>{transactionStatus === "paid" ? "-" : "+"} </span>
-            <span>{currencySymbole} </span>
+            <span>$ </span>
             {amount}
           </Typography>
         </div>
+
         <EditIcon
           style={{ color: selected ? "white" : "" }}
           onClick={() =>
@@ -40,6 +45,10 @@ const TransactionItem = ({ data, selected }) => {
               state: data,
             })
           }
+        />
+        <DeleteIcon
+          style={{ color: selected ? "white" : "red" }}
+          onClick={() => dispatch(deleteTransaction({ id }))}
         />
       </div>
     </div>

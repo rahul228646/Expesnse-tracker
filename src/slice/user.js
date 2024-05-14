@@ -1,113 +1,218 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import axios from "axios";
+
+const baseUrl = "http://127.0.0.1:8080";
+let userId = JSON.parse(localStorage.getItem("userId"));
+
+const updateLocalStorage = (key, val) => {
+  return localStorage.setItem(key, JSON.stringify(val));
+};
+const getLocalStorage = (key) => {
+  let lc = localStorage.getItem(key);
+  return lc ? JSON.parse(lc) : null;
+};
+
+export const createUser = createAsyncThunk(
+  "user/createUser",
+  async ({ userInfo }, { rejectWithValue }) => {
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    const payload = {
+      name: userInfo?.name,
+      balance: parseFloat(userInfo?.balance),
+      totalIncome: 0,
+      totalExpense: 0,
+      transactions: [],
+      expenses: [],
+      income: [],
+    };
+    try {
+      const response = await axios.post(`${baseUrl}/user`, payload, {
+        headers,
+      });
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err?.response);
+    }
+  }
+);
+
+export const getUserInfo = createAsyncThunk(
+  "user/getUserInfo",
+  async ({}, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${baseUrl}/user/${userId}`);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err?.response);
+    }
+  }
+);
+
+export const addTransaction = createAsyncThunk(
+  "user/addTransaction",
+  async ({ payload }, { rejectWithValue }) => {
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    try {
+      const response = await axios.put(
+        `${baseUrl}/user/${userId}/addTransaction`,
+        payload,
+        {
+          headers,
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err?.response);
+    }
+  }
+);
+
+export const updateTransaction = createAsyncThunk(
+  "user/updateTransaction",
+  async ({ id, payload }, { rejectWithValue }) => {
+    const headers = {
+      "Content-Type": "application/json",
+    };
+    try {
+      const response = await axios.put(
+        `${baseUrl}/user/${userId}/transactions/${id}`,
+        payload,
+        {
+          headers,
+        }
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err?.response);
+    }
+  }
+);
+
+export const deleteTransaction = createAsyncThunk(
+  "user/deleteTransaction",
+  async ({ id }, { rejectWithValue }) => {
+    try {
+      const response = await axios.delete(
+        `${baseUrl}/user/${userId}/transactions/${id}/delete`
+      );
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(err?.response);
+    }
+  }
+);
 
 const initialState = {
-  name: "rahul",
-  balance: 1000,
-  totalIncome: 0,
-  totalExpense: 0,
-  transactions: [],
-  income: [],
-  expenses: [],
-  currencySymbol: "$",
-  currencyCode: "dollar",
+  user: {
+    id: getLocalStorage("userId"),
+    userInfo: getLocalStorage("userInfo"),
+  },
+  userLoading: false,
+  error: null,
 };
 
 export const userInfoSlice = createSlice({
   name: "user",
   initialState,
-  reducers: {
-    addTransaction: (state, action) => {
-      const { transactionStatus, amount } = action.payload;
-      if (transactionStatus === "paid") {
-        let expenses = [...state.expenses, action.payload];
-        state.expenses = expenses;
-        state.balance = parseFloat(state.balance) - parseFloat(amount);
-        state.totalExpense =
-          parseFloat(state.totalExpense) + parseFloat(amount);
-      } else {
-        let income = [...state.income, action.payload];
-        state.income = income;
-        state.balance = parseFloat(state.balance) + parseFloat(amount);
-        state.totalIncome = parseFloat(state.totalIncome) + parseFloat(amount);
-      }
-      let transaction = [...state.transactions, action.payload];
-      transaction.sort(function (a, b) {
-        return new Date(b.date) - new Date(a.date);
+  reducers: {},
+  extraReducers(builder) {
+    builder
+      .addCase(createUser.pending, (state, action) => {
+        state.userLoading = true;
+        state.error = null;
+      })
+      .addCase(createUser.fulfilled, (state, action) => {
+        let data = action.payload.data.data;
+        updateLocalStorage("userId", data.id);
+        updateLocalStorage("userInfo", data);
+        state.user = { ...state.user, id: data?.id };
+        state.user = { ...state.user, userInfo: data };
+        state.userLoading = false;
+        state.error = null;
+      })
+      .addCase(createUser.rejected, (state, action) => {
+        state.user = null;
+        state.userLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(getUserInfo.pending, (state, action) => {
+        state.userLoading = true;
+        state.error = null;
+      })
+      .addCase(getUserInfo.fulfilled, (state, action) => {
+        let data = action.payload.data.data;
+
+        updateLocalStorage("userInfo", data);
+        state.user = { ...state.user, userInfo: data };
+        state.userLoading = false;
+        state.error = null;
+      })
+      .addCase(getUserInfo.rejected, (state, action) => {
+        state.user = { ...state.user, userInfo: null };
+        state.userLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(addTransaction.pending, (state, action) => {
+        state.userLoading = true;
+        state.error = null;
+      })
+      .addCase(addTransaction.fulfilled, (state, action) => {
+        let data = action.payload.data;
+        updateLocalStorage("userInfo", data);
+        state.user = { ...state.user, userInfo: data };
+        state.userLoading = false;
+        state.error = null;
+      })
+      .addCase(addTransaction.rejected, (state, action) => {
+        state.user = { ...state.user, userInfo: null };
+        state.userLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateTransaction.pending, (state, action) => {
+        state.userLoading = true;
+        state.error = null;
+      })
+      .addCase(updateTransaction.fulfilled, (state, action) => {
+        let data = action.payload.data;
+        updateLocalStorage("userInfo", data);
+        state.user = { ...state.user, userInfo: data };
+        state.userLoading = false;
+        state.error = null;
+      })
+      .addCase(updateTransaction.rejected, (state, action) => {
+        state.user = { ...state.user, userInfo: null };
+        state.userLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteTransaction.pending, (state, action) => {
+        state.userLoading = true;
+        state.error = null;
+      })
+      .addCase(deleteTransaction.fulfilled, (state, action) => {
+        let data = action.payload.data;
+        updateLocalStorage("userInfo", data);
+        state.user = { ...state.user, userInfo: data };
+        state.userLoading = false;
+        state.error = null;
+      })
+      .addCase(deleteTransaction.rejected, (state, action) => {
+        state.user = { ...state.user, userInfo: null };
+        state.userLoading = false;
+        state.error = action.payload;
       });
-      state.transactions = transaction;
-    },
-
-    updateTransaction: (state, action) => {
-      const { id, transactionStatus, amount } = action.payload;
-      let transactionIdx = null;
-      transactionIdx = state.transactions.findIndex(
-        (trans) => trans?.id === id
-      );
-      let oldExpense = state.expenses;
-      let oldIncome = state.income;
-
-      let oldTransaction = state.transactions[transactionIdx];
-
-      if (oldTransaction?.transactionStatus === "paid") {
-        if (transactionStatus === "paid") {
-          state.balance =
-            parseFloat(state.balance) +
-            parseFloat(oldTransaction?.amount) -
-            parseFloat(amount);
-          state.totalExpense =
-            parseFloat(state.totalExpense) -
-            parseFloat(oldTransaction?.amount) +
-            parseFloat(amount);
-        } else {
-          oldExpense = oldExpense?.filter((expense) => expense?.id != id);
-          state.expenses = oldExpense;
-          state.income = [...state?.income, action.payload];
-          state.balance =
-            parseFloat(state.balance) +
-            parseFloat(oldTransaction?.amount) +
-            parseFloat(amount);
-          state.totalExpense =
-            parseFloat(state.totalExpense) - parseFloat(oldTransaction?.amount);
-          state.totalIncome =
-            parseFloat(state.totalIncome) + parseFloat(amount);
-        }
-      } else {
-        if (transactionStatus === "paid") {
-          oldIncome = oldIncome?.filter((income) => income?.id != id);
-          state.income = oldIncome;
-          state.expenses = [...state?.expenses, action.payload];
-          state.balance =
-            parseFloat(state.balance) -
-            parseFloat(oldTransaction?.amount) -
-            parseFloat(amount);
-          state.totalExpense =
-            parseFloat(state.totalExpense) + parseFloat(amount);
-          state.totalIncome =
-            parseFloat(state.totalIncome) - parseFloat(oldTransaction?.amount);
-        } else {
-          state.balance =
-            parseFloat(state.balance) -
-            parseFloat(oldTransaction?.amount) +
-            parseFloat(amount);
-          state.totalIncome =
-            parseFloat(state.totalIncome) -
-            parseFloat(oldTransaction?.amount) +
-            parseFloat(amount);
-        }
-      }
-
-      let allTransactions = state.transactions;
-      allTransactions[transactionIdx] = action.payload;
-      allTransactions?.sort(function (a, b) {
-        return new Date(b.date) - new Date(a.date);
-      });
-      state.transactions = allTransactions;
-    },
   },
 });
 
-export const { addTransaction, updateTransaction } = userInfoSlice.actions;
+export const {} = userInfoSlice.actions;
 
-export const selectUser = (state) => state.userInfo;
+export const selectUser = (state) => state.userInfo.user.userInfo;
+
+export const selectUserId = (state) => state.userInfo.user.id;
+
+export const selectUserLoading = (state) => state.userInfo.userLoading;
 
 export default userInfoSlice.reducer;

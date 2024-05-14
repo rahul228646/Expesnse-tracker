@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from "react";
-import Background from "../components/background/Background";
+import Background from "../../components/background/Background";
 import "./updateExpense.css";
 import { Button, MenuItem, Select, TextField, Typography } from "@mui/material";
 import { useDispatch } from "react-redux";
-import { addTransaction, updateTransaction } from "../slice/user";
 import { useLocation, useNavigate } from "react-router-dom";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
-import { v4 as uuidv4 } from "uuid";
+import { addTransaction, updateTransaction } from "../../slice/user";
 
 const Add = ({ title, buttonText }) => {
   const [transactionItem, setTransactionItem] = useState();
@@ -20,26 +19,21 @@ const Add = ({ title, buttonText }) => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const handleChange = (e) => {
+  const handleChange = (name, value) => {
     setTransactionItem((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value,
+      [name]: value,
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (buttonText == "Update") {
-      dispatch(updateTransaction(transactionItem));
+      const { id, ...payload } = transactionItem;
+      dispatch(updateTransaction({ id, payload }));
     } else {
-      let item = transactionItem;
-      item = {
-        ...item,
-        id: uuidv4(),
-        currencySymbole: "$",
-        currencyCode: "dollar",
-      };
-      dispatch(addTransaction(item));
+      let payload = transactionItem;
+      dispatch(addTransaction({ payload }));
     }
     navigate("/");
   };
@@ -69,7 +63,7 @@ const Add = ({ title, buttonText }) => {
           <Select
             style={{ color: "white" }}
             name="name"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e.target.name, e.target.value)}
             value={transactionItem?.name}
           >
             <MenuItem value={"Netflix"}>Netflix</MenuItem>
@@ -83,7 +77,9 @@ const Add = ({ title, buttonText }) => {
           <TextField
             type="number"
             variant="outlined"
-            onChange={handleChange}
+            onChange={(e) =>
+              handleChange(e.target.name, parseFloat(e.target.value))
+            }
             name="amount"
             value={transactionItem?.amount}
           />
@@ -94,7 +90,10 @@ const Add = ({ title, buttonText }) => {
           <DatePicker
             selected={transactionItem?.date}
             onChange={(newVal) =>
-              setTransactionItem((prev) => ({ ...prev, date: newVal }))
+              setTransactionItem((prev) => ({
+                ...prev,
+                date: new Date(newVal),
+              }))
             }
             className="datePicker"
           />
@@ -105,7 +104,7 @@ const Add = ({ title, buttonText }) => {
 
           <Select
             name="transactionStatus"
-            onChange={handleChange}
+            onChange={(e) => handleChange(e.target.name, e.target.value)}
             value={transactionItem?.transactionStatus}
           >
             <MenuItem value={"paid"}>Paid</MenuItem>

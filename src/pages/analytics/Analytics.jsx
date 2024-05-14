@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import AnalyticsChart from "../components/analyticsChart/AnalyticsChart";
+import AnalyticsChart from "../../components/analyticsChart/AnalyticsChart";
 import { MenuItem, Select, Typography } from "@mui/material";
 import "./analytics.css";
 import { useSelector } from "react-redux";
-import { selectUser } from "../slice/user";
-import TransactionItem from "../components/transactionItem/TransactionItem";
+import { selectUser } from "../../slice/user";
+import TransactionItem from "../../components/transactionItem/TransactionItem";
 import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
-import DateTabs from "../components/dateTabs/DateTabs";
+import DateTabs from "../../components/dateTabs/DateTabs";
 import { useNavigate } from "react-router-dom";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import NoTransactionFound from "../../components/noTransaction/NoTransactionFound";
 
 function descendingComparator(a, b, orderBy) {
   if (a?.sort === false || b?.sort === false) return 0;
@@ -92,10 +93,12 @@ const Analytics = () => {
         </div>
       </div>
       <div className="transaction-selection-area">
-        <DateTabs selectedTab={selectedTab} updateTab={updateTab} />
+        {data?.length > 0 && (
+          <DateTabs selectedTab={selectedTab} updateTab={updateTab} />
+        )}
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
           <Select
-            sx={{ height: "40px" }}
+            sx={{ height: "40px", width: data?.length > 0 ? "auto" : "100%" }}
             name="transactionStatus"
             value={dataSelector}
             onChange={handleChange}
@@ -105,44 +108,57 @@ const Analytics = () => {
             <MenuItem value={"income"}>Income</MenuItem>
           </Select>
         </div>
-        <AnalyticsChart
-          transactionData={data}
-          xAxisOption={selectedTab}
-          updateTransactionSelection={updateTransactionSelection}
-        />
+        {data?.length > 0 && (
+          <AnalyticsChart
+            transactionData={data}
+            xAxisOption={selectedTab}
+            updateTransactionSelection={updateTransactionSelection}
+          />
+        )}
       </div>
-      <div className="transactions-area">
-        <div className="transactions-area-header">
-          <Typography style={{ fontSize: "20px", fontWeight: "bold" }}>
-            {dataSelector === "expenses" ? "Top Spendings" : "Top Earnings"}
-          </Typography>
-          <ArrowDownwardIcon
-            style={{
-              transform: order === "desc" ? "rotate(0deg)" : "rotate(180deg)",
-            }}
-            onClick={() =>
-              setOrder((prev) => (prev === "desc" ? "asc" : "desc"))
-            }
+      {data?.length > 0 ? (
+        <div className="transactions-area">
+          <div className="transactions-area-header">
+            <Typography style={{ fontSize: "20px", fontWeight: "bold" }}>
+              {dataSelector === "expenses" ? "Top Spendings" : "Top Earnings"}
+            </Typography>
+            <ArrowDownwardIcon
+              style={{
+                transform: order === "desc" ? "rotate(0deg)" : "rotate(180deg)",
+              }}
+              onClick={() =>
+                setOrder((prev) => (prev === "desc" ? "asc" : "desc"))
+              }
+            />
+          </div>
+          <div className="transaction-area-content">
+            {sortedData?.map((transaction) => {
+              return (
+                <div
+                  key={transaction?.id}
+                  className={`analytic-item ${
+                    selectedTransaction === transaction?.id
+                      ? "selected-item"
+                      : ""
+                  }`}
+                >
+                  <TransactionItem
+                    key={transaction?.id}
+                    data={transaction}
+                    selected={selectedTransaction === transaction?.id}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div style={{ marginTop: "30px" }}>
+          <NoTransactionFound
+            title={`No transaction found.\n Try changing the filters . . .`}
           />
         </div>
-        <div className="transaction-area-content">
-          {sortedData?.map((transaction) => {
-            return (
-              <div
-                className={`analytic-item ${
-                  selectedTransaction === transaction?.id ? "selected-item" : ""
-                }`}
-              >
-                <TransactionItem
-                  key={transaction?.id}
-                  data={transaction}
-                  selected={selectedTransaction === transaction?.id}
-                />
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
     </div>
   );
 };

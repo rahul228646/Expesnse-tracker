@@ -15,9 +15,10 @@ const NavBar = () => {
   useEffect(() => {
     if (location.pathname === "/") {
       setValue(0);
-    }
-    if (location.pathname === "/edit") {
+    } else if (location.pathname === "/edit") {
       setValue(1);
+    } else {
+      setValue(2);
     }
   }, [location]);
 

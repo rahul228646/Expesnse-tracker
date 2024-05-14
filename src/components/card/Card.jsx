@@ -14,7 +14,7 @@ const Card = () => {
         <div className="balance">
           <Typography>Total Balance</Typography>
           <Typography className="total-amount">
-            <span>{user?.currencySymbol} </span>
+            <span>$ </span>
             {user?.balance}
           </Typography>
         </div>
@@ -37,7 +37,7 @@ const Card = () => {
 
           <Typography className="income-expense-amount">
             {" "}
-            <span>{user?.currencySymbol} </span>
+            <span>$ </span>
             {user?.totalIncome}
           </Typography>
         </div>
@@ -57,7 +57,7 @@ const Card = () => {
           </div>
           <Typography className="income-expense-amount">
             {" "}
-            <span>{user?.currencySymbol} </span>
+            <span>$ </span>
             {user?.totalExpense}
           </Typography>
         </div>
